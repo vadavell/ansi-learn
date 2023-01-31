@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
   tasks:
-    - name: Print message 2
+    - name: Print message   2
       debug:
-        msg: Hello Ansible World from playboook 2        
+        msg: Hello Ansible World from playboook   2   

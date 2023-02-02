@@ -1,0 +1,8 @@
+---
+  - hosts: localhost      
+    tasks:
+    - name: Check Date with Shell command prompt
+      shell:
+         "date"
+      register: datecmd      
+    - debug: msg="{{ datecmd }}"

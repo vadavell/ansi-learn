@@ -1,0 +1,85 @@
+---
+- name: Ansible ECK Operator Installation
+  hosts: leafs
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+  tasks: 
+
+  # Authenticate to remote cluster and get the nodes
+
+    - name: Log in to OC 
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
+
+    - name: Get the nodes details
+      k8s_info:
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Node
+        validate_certs: no
+      register: nodes
+    - name: "Print the nodes to a console"
+      debug:
+        msg: "{{ nodes }}"  
+
+
+# Creating the Namespace in remote cluster
+
+    - name: Create a k8s namespace
+      k8s:
+        name: openshift-operators # defining the namespace
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Namespace
+        state: present    # State=present when you need to create new
+        validate_certs: no
+
+# Copying the eck_operators_subscription.yml, elasticsearch-sample-instance.yml and kibana-sample-instance.yml in the remote node cluster
+
+    - name: copying subscription file with playbook
+      become: true
+      copy:
+        src: /home/sverma/play-books/k8s/eck_operators_subscription.yml
+        dest: /tmp/eck_operators_subscription.yml
+
+    - name: copying elasticsearch instance file with playbook
+      become: true
+      copy:
+        src: /home/sverma/play-books/k8s/elasticsearch-sample-instance.yml
+        dest: /tmp/elasticsearch-sample-instance.yml
+
+    - name: copying kibana instance file with playbook
+      become: true
+      copy:
+        src: /home/sverma/play-books/k8s/kibana-sample-instance.yml
+        dest: /tmp/kibana-sample-instance.yml
+
+
+# ECK Operator installation in openshift-operators namespace using file stored locally
+
+    - name: ECK Operator Installation based on the Subscription file
+      k8s:
+        state: present            # State=present when you need to create new object
+        namespace: openshift-operators  # defining the namespace
+        src: /tmp/eck_operators_subscription.yml  # Source file location
+
+# Create Elasticsearch instance in openshift-operators namespace using file stored locally
+
+    - name: Create New Elasticsearch instance based on the Elasticsearch kind file
+      k8s:
+        state: present            # State=present when you need to create new object
+        namespace: openshift-operators  # defining the namespace
+        src: /tmp/elasticsearch-sample-instance.yml  # Source file location  
+
+# Create Kibana instance in openshift-operators namespace using file stored locally
+
+    - name: Create New Kibana instance based on the Kibana kind file
+      k8s:
+        state: present            # State=present when you need to create new object
+        namespace: openshift-operators  # defining the namespace
+        src: /tmp/kibana-sample-instance.yml  # Source file location       

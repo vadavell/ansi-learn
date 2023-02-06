@@ -1,0 +1,31 @@
+- name: test connection
+  hosts: 'master02'
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+  tasks:
+    # - name: Induce an exception to see what happens
+    #   ping:
+    - name: Log in (obtain access token)
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
+- name: test connection
+  hosts: 'masters'
+  tasks:
+    - name: create the kube user account
+      user: name=kube append=yes state=present createhome=yes shell=/bin/bash
+
+    # - name: allow 'kube' to use sudo without needing a password
+    #   lineinfile:
+    #     dest: /etc/sudoers
+    #     line: 'kube ALL=(ALL) NOPASSWD: ALL'
+    #     validate: 'visudo -cf %s'
+
+    # - name: set up authorized keys for the kube user
+    #   authorized_key: user=kube key="{{item}}"
+    #   with_file:
+    #     - ~/.ssh/id_rsa.pub

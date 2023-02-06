@@ -1,0 +1,65 @@
+---
+- name: k8s-operations
+  hosts: leafs
+  # vars:
+  #   ansible_python_interpreter: /usr/bin/python2.7
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+  tasks:
+    - name: install python
+      yum:
+        name: python3
+        state: present
+        update_cache: yes
+    # - set_fact:
+    #     ansible_python_interpreter: /usr/bin/python3.6
+    - name: install pre-requisites
+      become: true
+      pip:
+        name:
+          - requests
+          - requests-oauthlib
+          - urllib3
+          - openshift
+          - pyyaml
+          - kubernetes
+    - name: Log in (obtain access token)
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
+    - name: Get the nodes details
+      k8s_info:
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Node
+        validate_certs: no
+      register: nodes
+    - name: "Print the nodes to a console"
+      debug:
+        msg: "{{ nodes }}"
+    - name: Add host to inventory
+      add_host:
+        hostname: "{{ item }}"
+        groups:
+        - Nodes
+      with_list: "{{ nodes.resources | json_query('[*].status.addresses[0].address') }}"
+
+
+- name: test connection
+  hosts: Nodes
+  tasks:
+    - name: Induce an exception to see what happens
+      ping:
+        data: crash
+
+    - name: Execute a command date
+      command: cat /etc/resolv.conf
+      register: file_content
+
+    - name: "Print the file content to a console"
+      debug:
+        msg: "{{ file_content.stdout }}"

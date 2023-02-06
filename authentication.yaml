@@ -1,0 +1,57 @@
+---
+- name: k8s-module
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.6
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      ca_cert: /home/sverma/play-books/k8s/ca.pem
+  tasks:
+    - block:
+      # - name: install epel-release
+      #   become: true
+      #   yum:
+      #     name: epel-release
+      #     state: present
+      #     update_cache: yes
+      # - name: install pip
+      #   become: true
+      #   yum:
+      #     name: python-pip
+      #     state: present
+      #     update_cache: yes
+      - name: install pre-requisites
+        become: true
+        shell: |
+          pip3 install requests
+          pip3 install requests-oauthlib
+          pip3 install urllib3
+          exit 0
+      # - name: install pre-requisites
+      #   become: true
+      #   pip:
+      #     name:
+      #       - urllib3
+      #       - requests
+      #       - requests-oauthlib
+      - name: install pre-requisites
+        pip:
+          name:
+            - requests
+            - requests-oauthlib
+            - urllib3
+            - openshift
+            - pyyaml
+            - kubernetes
+      - name: Log in (obtain access token)
+        k8s_auth:
+          username: kubeadmin
+          password: z2NVC-GkVFr-SNgUI-hf9La
+          validate_certs: no
+        register: k8s_auth_results
+      - name: Get a list of all pods from any namespace
+        k8s_info:
+          api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+          kind: Pod
+        register: pod_list

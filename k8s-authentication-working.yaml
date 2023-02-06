@@ -1,0 +1,76 @@
+
+---
+# - name: k8s-login
+#   hosts: localhost
+#   gather_facts: false
+#   module_defaults:
+#     group/k8s:
+#       host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+#       ca_cert: ca.pem
+#   vars:
+#     ansible_python_interpreter: /usr/bin/python3.6
+#   module_defaults:
+#     group/k8s:
+#       host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+#   environment:
+#     KUBECONFIG: "/home/sverma/play-books/k8s/kubeconfig"
+#   tasks:
+#     - debug: var=ansible_host
+#     - name: login to cluster using kubeadmin
+#       shell: |
+#         oc login -u kubeadmin -p z2NVC-GkVFr-SNgUI-hf9La --server="https://api.ocp-by-awx.cp.fyre.ibm.com:6443" --insecure-skip-tls-verify=true
+#     - name: Verify login
+#       shell: "oc whoami"
+#       register: logged_in_user
+#     - name: "Print the file content to a console"
+#       debug:
+#         msg: "{{ logged_in_user.stdout }}"
+
+- name: k8s-operations
+  hosts: leafs
+  # vars:
+  #   ansible_python_interpreter: /usr/bin/python2.7
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+  tasks:
+    - name: install python
+      yum:
+        name: python3
+        state: present
+        update_cache: yes
+    - set_fact:
+        ansible_python_interpreter: /usr/bin/python3.6
+    - name: install pre-requisites
+      become: true
+      pip:
+        name:
+          - requests
+          - requests-oauthlib
+          - urllib3
+          - openshift
+          - pyyaml
+          - kubernetes
+    - name: Log in (obtain access token)
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
+    - name: Create a k8s namespace
+      k8s:
+        name: testing
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+        validate_certs: no
+    - name: test
+      k8s_info:
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Service
+        name: web
+        namespace: testing
+        validate_certs: no

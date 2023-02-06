@@ -1,0 +1,33 @@
+---
+
+leafs:
+  hosts:
+    leaf01:
+      ansible_host: api.ocp-by-awx.cp.fyre.ibm.com
+      ansible_connection: ssh
+      ansible_ssh_user: root
+      ansible_ssh_pass: Root@123Root@123
+
+masters:
+  hosts:
+    master01:
+      ansible_host: master0.ocp-by-awx.cp.fyre.ibm.com
+      ansible_ssh_user: sverma
+    master02:
+      ansible_host: master1.ocp-by-awx.cp.fyre.ibm.com
+      ansible_ssh_user: root
+    master03:
+      ansible_host: master2.ocp-by-awx.cp.fyre.ibm.com
+      ansible_ssh_user: root
+workers:
+  hosts:
+    worker01:
+      ansible_host: worker0.ocp-by-awx.cp.fyre.ibm.com
+      ansible_ssh_user: root
+    worker02:
+      ansible_host: worker1.ocp-by-awx.cp.fyre.ibm.com
+      ansible_ssh_user: root
+cluster_nodes:
+  children:
+    masters:
+    workers:

@@ -1,0 +1,29 @@
+---
+- name: Authenticate to remote cluster and get the nodes
+  hosts: leafs
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      
+  tasks: 
+
+  # Authenticate to remote cluster and get the nodes
+
+    - name: Log in to OC 
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
+
+    - name: Get the nodes details
+      k8s_info:
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Node
+        validate_certs: no
+      register: nodes
+    - name: "Print the nodes to a console"
+      debug:
+        msg: "{{ nodes }}"  

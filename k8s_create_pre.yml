@@ -1,0 +1,41 @@
+---
+- name: k8s-operations
+  hosts: localhost
+  # vars:
+  #   ansible_python_interpreter: /usr/bin/python2.7
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+  tasks:
+    - name: install python
+      yum:
+        name: python3
+        state: present
+        update_cache: yes
+    - set_fact:
+        ansible_python_interpreter: /usr/bin/python3.6
+    - name: install pre-requisites
+      become: true
+      pip:
+        name:
+          - requests
+          - requests-oauthlib
+          - urllib3
+          - openshift
+          - pyyaml
+          - kubernetes 
+    - name: Log in (obtain access token)
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
+    - name: Create a k8s namespace
+      k8s:
+        name: testing
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+        validate_certs: no

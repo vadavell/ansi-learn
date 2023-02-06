@@ -27,3 +27,14 @@
     - name: "Print the nodes to a console"
       debug:
         msg: "{{ nodes }}"  
+
+# Creating the Namespace in remote cluster
+
+    - name: Create a k8s namespace
+      k8s:
+        name: openshift-operators # defining the namespace
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+        api_version: v1
+        kind: Namespace
+        state: present    # State=present when you need to create new
+        validate_certs: no

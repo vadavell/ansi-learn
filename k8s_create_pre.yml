@@ -23,8 +23,7 @@
           - requests-oauthlib
           - urllib3
           - openshift
-          - pyyaml
-         
+          - pyyaml         
     - name: Log in (obtain access token)
       k8s_auth:
         username: kubeadmin

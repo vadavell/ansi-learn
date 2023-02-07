@@ -1,0 +1,11 @@
+---
+  - name: Shell Examples
+    hosts: localhost
+    tasks:
+
+    - name: Check key with Shell command
+      shell:
+         "oc whoami -t"
+      register: api_key      
+
+    - debug: msg="{{api_key.stdout}}"

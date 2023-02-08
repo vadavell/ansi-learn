@@ -1,0 +1,149 @@
+---
+- name: ECK Operator installation
+  hosts: api.ocp-by-awx.cp.fyre.ibm.com
+  become: yes  
+  gather_facts: false
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+  tasks:
+    - name: Download oc CLI
+      shell: curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.6/linux/oc.tar.gz
+
+    - name: Extract oc CLI
+      shell: tar -xf oc.tar.gz -C /usr/local/bin/
+
+    - name: Set executable permission
+      shell: chmod +x /usr/local/bin/oc        
+    
+    - name: Login to openshift cluster
+      shell: oc login -u kubeadmin -p z2NVC-GkVFr-SNgUI-hf9La https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      register: login_output
+
+    - name: Get openshift cluster token
+      shell: oc whoami -t
+      register: token_output
+      when: login_output.rc == 0
+
+    - name: Set openshift cluster token as variable
+      set_fact:
+        openshift_token: "{{ token_output.stdout }}"
+      when: token_output.rc == 0
+
+    - name: Create a k8s namespace
+      k8s:
+        name: openshift-operators
+        api_key: "{{ openshift_token }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+        validate_certs: no
+
+    - name: ECK Operator Installation based on the Subscription definition
+      k8s:
+        definition: 
+          apiVersion: operators.coreos.com/v1alpha1
+          kind: Subscription
+          metadata:
+            name: elasticsearch-eck-operator-certified
+            namespace: openshift-operators
+          spec:
+            channel: stable
+            installPlanApproval: Automatic
+            name: elasticsearch-eck-operator-certified
+            source: certified-operators
+            sourceNamespace: openshift-marketplace
+            startingCSV: elasticsearch-eck-operator-certified.v2.6.2
+
+    - name: Create New Elasticsearch instance 
+      k8s:
+        definition:
+          apiVersion: elasticsearch.k8s.elastic.co/v1
+          kind: Elasticsearch
+          metadata:
+            name: elasticsearch-sample-test4
+            namespace: openshift-operators
+          spec:
+            auth: {}
+            http:
+              service:
+                metadata: {}
+                spec: {}
+              tls:
+                certificate: {}
+            monitoring:
+              logs: {}
+              metrics: {}
+            nodeSets:
+              - config:
+                  node.attr.attr_name: attr_value
+                  node.roles:
+                    - master
+                    - data
+                  node.store.allow_mmap: false
+                count: 3
+                name: default
+                podTemplate:
+                  metadata:
+                    creationTimestamp: null
+                    labels:
+                      foo: bar
+                  spec:
+                    containers:
+                      - name: elasticsearch
+                        resources:
+                          limits:
+                            cpu: '2'
+                            memory: 4Gi
+                          requests:
+                            cpu: '1'
+                            memory: 4Gi
+            transport:
+              service:
+                metadata: {}
+                spec: {}
+              tls:
+                certificate: {}
+            updateStrategy:
+              changeBudget: {}
+            version: 8.6.0  
+
+    - name: Create New Kibana instance 
+      k8s:
+        definition:
+          apiVersion: kibana.k8s.elastic.co/v1
+          kind: Kibana
+          metadata:  
+            name: kibana-sample-test4
+            namespace: openshift-operators  
+          spec:
+            count: 1
+            elasticsearchRef:
+              name: elasticsearch-sample-test4
+            enterpriseSearchRef: {}
+            http:
+              service:
+                metadata: {}
+                spec: {}
+              tls:
+                certificate: {}
+            monitoring:
+              logs: {}
+              metrics: {}
+            podTemplate:
+              metadata:
+                creationTimestamp: null
+                labels:
+                  foo: bar
+              spec:
+                containers:
+                  - name: kibana
+                    resources:
+                      limits:
+                        cpu: '2'
+                        memory: 2Gi
+                      requests:
+                        cpu: 500m
+                        memory: 1Gi
+            version: 8.6.0
+

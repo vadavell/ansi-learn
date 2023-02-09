@@ -1,40 +1,39 @@
 ---
 - name: ECK Operator installation
-  hosts: api.ocp-by-awx.cp.fyre.ibm.com
-  become: yes  
+  hosts: leafs
   gather_facts: false
-  tasks:
-    - name: Download oc CLI
-      shell: curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.6/linux/oc.tar.gz
+  module_defaults:
+    group/k8s:
+      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      
+  tasks: 
 
-    - name: Extract oc CLI
-      shell: tar -xf oc.tar.gz -C /usr/local/bin/
+  # Authenticate to remote cluster
 
-    - name: Set executable permission
-      shell: chmod +x /usr/local/bin/oc        
-    
-    - name: Login to openshift cluster
-      shell: oc login -u kubeadmin -p "{{ kube_admin_password }}" https://api.ocp-by-awx.cp.fyre.ibm.com:6443
-      register: login_output
+  
 
-    - name: Get openshift cluster token
-      shell: oc whoami -t
-      register: token_output
-      when: login_output.rc == 0
+    - name: Log in to OC 
+      k8s_auth:
+        username: kubeadmin
+        password: z2NVC-GkVFr-SNgUI-hf9La
+        validate_certs: no
+      register: k8s_auth_results
 
-    - name: Set openshift cluster token as variable
-      set_fact:
-        openshift_token: "{{ token_output.stdout }}"
-      when: token_output.rc == 0
+
+
+# Creating the Namespace in remote cluster
 
     - name: Create a k8s namespace
       k8s:
-        name: openshift-operators
-        api_key: "{{ openshift_token }}"
+        name: openshift-operators # defining the namespace
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
         api_version: v1
         kind: Namespace
-        state: present
+        state: present    # State=present when you need to create new
         validate_certs: no
+
+
+# ECK Operator installation based on Subscription definition
 
     - name: ECK Operator Installation based on the Subscription definition
       k8s:
@@ -52,13 +51,15 @@
             sourceNamespace: openshift-marketplace
             startingCSV: elasticsearch-eck-operator-certified.v2.6.2
 
+# Create Elasticsearch instance 
+
     - name: Create New Elasticsearch instance 
       k8s:
         definition:
           apiVersion: elasticsearch.k8s.elastic.co/v1
           kind: Elasticsearch
           metadata:
-            name: elasticsearch-sample
+            name: elasticsearch-sample-test4
             namespace: openshift-operators
           spec:
             auth: {}
@@ -78,7 +79,7 @@
                     - master
                     - data
                   node.store.allow_mmap: false
-                count: 1
+                count: 3
                 name: default
                 podTemplate:
                   metadata:
@@ -105,18 +106,20 @@
               changeBudget: {}
             version: 8.6.0  
 
+# Create Kibana instance 
+
     - name: Create New Kibana instance 
       k8s:
         definition:
           apiVersion: kibana.k8s.elastic.co/v1
           kind: Kibana
           metadata:  
-            name: kibana-sample
+            name: kibana-sample-test4
             namespace: openshift-operators  
           spec:
             count: 1
             elasticsearchRef:
-              name: elasticsearch-sample
+              name: elasticsearch-sample-test4
             enterpriseSearchRef: {}
             http:
               service:
@@ -143,4 +146,3 @@
                         cpu: 500m
                         memory: 1Gi
             version: 8.6.0
-

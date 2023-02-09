@@ -1,6 +1,6 @@
 ---
 - name: ECK Operator installation
-  hosts: api.ocp-by-awx.cp.fyre.ibm.com
+  hosts: all
   become: yes  
   gather_facts: false
   tasks:
@@ -13,11 +13,11 @@
     - name: Set executable permission
       shell: chmod +x /usr/local/bin/oc        
     
-    - name: Login to openshift cluster
+    - name: Login to openshift cluster using kubeadmin
       shell: oc login -u kubeadmin -p "{{ kube_admin_password }}" https://api."{{ clustername_with_domain }}":6443
       register: login_output
 
-    - name: Get openshift cluster token
+    - name: Verify login and get openshift cluster token
       shell: oc whoami -t
       register: token_output
       when: login_output.rc == 0

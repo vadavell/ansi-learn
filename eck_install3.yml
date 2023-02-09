@@ -14,7 +14,7 @@
       shell: chmod +x /usr/local/bin/oc        
     
     - name: Login to openshift cluster
-      shell: oc login -u kubeadmin -p "{{ kube_admin_password }}" https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      shell: oc login -u kubeadmin -p "{{ kube_admin_password }}" https://api."{{ clustername_with_domain }}":6443
       register: login_output
 
     - name: Get openshift cluster token

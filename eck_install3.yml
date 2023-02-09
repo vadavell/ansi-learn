@@ -17,7 +17,7 @@
       shell: chmod +x /usr/local/bin/oc        
     
     - name: Login to openshift cluster
-      shell: oc login -u kubeadmin -p z2NVC-GkVFr-SNgUI-hf9La https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      shell: oc login -u kubeadmin -p "{{ kube_admin_password }}" https://api.ocp-by-awx.cp.fyre.ibm.com:6443
       register: login_output
 
     - name: Get openshift cluster token
@@ -61,7 +61,7 @@
           apiVersion: elasticsearch.k8s.elastic.co/v1
           kind: Elasticsearch
           metadata:
-            name: elasticsearch-sample-test4
+            name: elasticsearch-sample
             namespace: openshift-operators
           spec:
             auth: {}
@@ -81,7 +81,7 @@
                     - master
                     - data
                   node.store.allow_mmap: false
-                count: 3
+                count: 1
                 name: default
                 podTemplate:
                   metadata:
@@ -114,12 +114,12 @@
           apiVersion: kibana.k8s.elastic.co/v1
           kind: Kibana
           metadata:  
-            name: kibana-sample-test4
+            name: kibana-sample
             namespace: openshift-operators  
           spec:
             count: 1
             elasticsearchRef:
-              name: elasticsearch-sample-test4
+              name: elasticsearch-sample
             enterpriseSearchRef: {}
             http:
               service:

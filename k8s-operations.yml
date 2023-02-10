@@ -1,13 +1,13 @@
 ---
 - name: k8s-operations
-  hosts: all
+  hosts: api.test2-10022023.cp.fyre.ibm.com
   become: yes
   # vars:
   #   ansible_python_interpreter: /usr/bin/python2.7
   gather_facts: false
   module_defaults:
-  group/k8s:
-    host: https://api.test2-10022023.cp.fyre.ibm.com:6443
+    group/k8s:
+      host: https://api.test2-10022023.cp.fyre.ibm.com:6443
   tasks:
     - name: Download oc CLI
       shell: curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.6/linux/oc.tar.gz

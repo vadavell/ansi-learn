@@ -1,13 +1,10 @@
 ---
 - name: k8s-operations
-  hosts: api.ocp-by-awx.cp.fyre.ibm.com
+  hosts: all
   become: yes
   # vars:
   #   ansible_python_interpreter: /usr/bin/python2.7
   gather_facts: false
-  module_defaults:
-    group/k8s:
-      host: https://api.ocp-by-awx.cp.fyre.ibm.com:6443
   tasks:
     - name: Download oc CLI
       shell: curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.6/linux/oc.tar.gz
@@ -18,7 +15,7 @@
     # - name: Verify installation
     #   shell: oc version
     - name: Login to openshift cluster
-      shell: oc login -u kubeadmin -p z2NVC-GkVFr-SNgUI-hf9La https://api.ocp-by-awx.cp.fyre.ibm.com:6443
+      shell: oc login -u kubeadmin -p CExEF-C82mb-E3BtR-QaEmh https://api.test2-10022023.cp.fyre.ibm.com:6443
       register: login_output
     - name: Get openshift cluster token
       shell: oc whoami -t
